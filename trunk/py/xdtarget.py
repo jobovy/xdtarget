@@ -1,3 +1,4 @@
+import re
 import numpy as nu
 from scipy import stats
 from extreme_deconvolution import extreme_deconvolution
@@ -30,8 +31,10 @@ def train(data,ngauss=2,init_xdtarget=None):
     #Initialize
     if init_xdtarget is None:
         initamp= nu.array([1./ngauss for ii in range(ngauss)])
-        datameans= nu.array([nu.mean(data.a[(not numpy.isnan(data.a[:,ii])*(not numnpy.isinf(data.a[:,ii])),ii]]) for ii in range(data.da)])
-        datastddevs= nu.array([nu.stddev(data.a[(not numpy.isnan(data.a[:,ii])*(not numnpy.isinf(data.a[:,ii])),ii]]) for ii in range(data.da)])
+        mask= (nu.isnan(data.a[:,ii]))*(nu.isinf(data.a[:,ii]))
+        mask= nu.array([not m for m in mask])
+        datameans= nu.array([nu.mean(data.a[mask,ii]) for ii in range(data.da)])
+        datastddevs= nu.array([nu.std(data.a[mask,ii]) for ii in range(data.da)])
         initmean= nu.zeros((ngauss,data.da))
         initcovar= nu.zeros((ngauss,data.da,data.da))
         for kk in range(ngauss):
@@ -50,7 +53,7 @@ def xd(data,init_xdtarget):
     initcovar= init_xdtarget.covar
 
     ydata= data.a
-    ycovar= ata.acov
+    ycovar= data.acov
     if hasattr(data,'weight'):
         weight= data.weight
     else:
@@ -78,7 +81,7 @@ class xdtarget:
 class trainData:
     """Class that holds the training data
     
-    Initialize with filename or arrays a and acov
+    Initialize with filename (atag, acovtag) or arrays a and acov
 
     a = [ndata,da]
 
@@ -87,7 +90,24 @@ class trainData:
     """
     def __init__(self,**kwargs):
         if kwargs.has_key('filename'):
-            pass
+            tmp_ext= re.split('\.',kwargs['filename'])[-1]
+            if tmp_ext == 'gz':
+                tmp_ext= re.split('\.',kwargs['filename'])[-2]+'.'+tmp_ext
+            if tmp_ext == 'fit' or tmp_ext == 'fits' or \
+                    tmp_ext == 'fit.gz' or tmp_ext == 'fits.gz':
+                if kwargs.has_key('atag'):
+                    atag= kwargs['atag']
+                else:
+                    atag= 'a'
+                if kwargs.has_key('acovtag'):
+                    acovtag= kwargs['acovtag']
+                else:
+                    acovtag= 'acov'
+                import pyfits
+                hdulist= pyfits.open(kwargs['filename'])
+                tbdata= hdulist[1].data
+                self.a= nu.array(tbdata.field(atag)).astype('float64')
+                self.acov= nu.array(tbdata.field(acovtag)).astype('float64')
         elif kwargs.has_key('a'):
             pass
-    self.da= self.a.shape[1]
+        self.da= self.a.shape[1]
