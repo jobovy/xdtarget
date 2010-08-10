@@ -2,6 +2,7 @@ import re
 import numpy as nu
 from scipy import stats, linalg
 from extreme_deconvolution import extreme_deconvolution
+import bovy_plot as plot
 
 def train(data,ngauss=2,init_xdtarget=None):
     """
@@ -149,7 +150,21 @@ class xdtarget:
             thisn= len(thiscomp)
             out.append(_sample_normal(self.mean[c,:],self.covar[c,:,:],
                                       nsamples=thisn))
-        return nu.array(out)
+        self.samples= nu.array(out).reshape((nsample,self.mean.shape[1]))
+        return self.samples
+
+    def scatterplot(self,d1,d2,*args,**kwargs):
+        if kwargs.has_key('hoggscatter'):
+            hoggscatter= kwargs['hoggscatter']
+            kwargs.pop('hoggscatter')
+        else:
+            hoggscatter= False
+        if hoggscatter:
+            plot.scatterplot(self.samples[:,d1],self.samples[:,d2],
+                           *args,**kwargs)
+        else:
+            plot.bovy_plot(self.samples[:,d1],self.samples[:,d2],
+                           *args,**kwargs)
 
     def _eval(self,a,acov):
         ndata= a.shape[0]
