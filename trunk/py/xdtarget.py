@@ -154,6 +154,32 @@ class xdtarget:
         return self.samples
 
     def scatterplot(self,d1,d2,*args,**kwargs):
+        """
+        NAME:
+        
+           scatterplot
+
+        PURPOSE:
+
+           make a scatterplot of the samples
+
+        INPUT:
+
+           d1, d2 - x and y dimension to plot
+
+           hoggscatter - if True, hogg_scatterplot
+
+           +bovy_plot.plot or bovy_plot.scatterplot args and kwargs
+
+        OUTPUT:
+
+           plot to output device
+
+        HISTORY:
+
+           2010-08-09 - Written - Bovy (NYU)
+
+        """
         if kwargs.has_key('hoggscatter'):
             hoggscatter= kwargs['hoggscatter']
             kwargs.pop('hoggscatter')
@@ -230,6 +256,46 @@ class xddata:
             if kwargs.has_key('weight'):
                 self.weight= kwargs['weight']
         self.da= self.a.shape[1]
+
+    def scatterplot(self,d1,d2,*args,**kwargs):
+        """
+        NAME:
+        
+           scatterplot
+
+        PURPOSE:
+
+           make a scatterplot of the data
+
+        INPUT:
+
+           d1, d2 - x and y dimension to plot
+
+           hoggscatter - if True, hogg_scatterplot
+
+           +bovy_plot.plot or bovy_plot.scatterplot args and kwargs
+
+        OUTPUT:
+
+           plot to output device
+
+        HISTORY:
+
+           2010-08-09 - Written - Bovy (NYU)
+
+        """
+        if kwargs.has_key('hoggscatter'):
+            hoggscatter= kwargs['hoggscatter']
+            kwargs.pop('hoggscatter')
+        else:
+            hoggscatter= False
+        if hoggscatter:
+            plot.scatterplot(self.a[:,d1],self.a[:,d2],
+                           *args,**kwargs)
+        else:
+            plot.bovy_plot(self.a[:,d1],self.a[:,d2],
+                           *args,**kwargs)
+
 
 
 def _logsum(array):
