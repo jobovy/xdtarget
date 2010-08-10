@@ -16,7 +16,7 @@ def train(data,ngauss=2,init_xdtarget=None):
 
     INPUT:
 
-       data - trainData instance
+       data - xddata instance
 
        ngauss - number of Gaussians to use
 
