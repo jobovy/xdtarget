@@ -185,6 +185,10 @@ class xdtarget:
             kwargs.pop('hoggscatter')
         else:
             hoggscatter= False
+        if not kwargs.has_key('xlabel'):
+            kwargs['xlabel']= str(d1)
+        if not kwargs.has_key('ylabel'):
+            kwargs['ylabel']= str(d2)
         if hoggscatter:
             plot.scatterplot(self.samples[:,d1],self.samples[:,d2],
                            *args,**kwargs)
@@ -289,6 +293,10 @@ class xddata:
             kwargs.pop('hoggscatter')
         else:
             hoggscatter= False
+        if not kwargs.has_key('xlabel'):
+            kwargs['xlabel']= str(d1)
+        if not kwargs.has_key('ylabel'):
+            kwargs['ylabel']= str(d2)
         if hoggscatter:
             plot.scatterplot(self.a[:,d1],self.a[:,d2],
                            *args,**kwargs)
