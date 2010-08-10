@@ -87,6 +87,8 @@ class trainData:
 
     acov= [ndata,da(,da)] (if diagonal 2D)
 
+    weight=, useweights=, wtag
+
     """
     def __init__(self,**kwargs):
         if kwargs.has_key('filename'):
@@ -103,11 +105,17 @@ class trainData:
                     acovtag= kwargs['acovtag']
                 else:
                     acovtag= 'acov'
+                if kwargs.has_key('wtag'):
+                    wtag= kwargs['wtag']
+                else:
+                    wtag= 'weight'
                 import pyfits
                 hdulist= pyfits.open(kwargs['filename'])
                 tbdata= hdulist[1].data
                 self.a= nu.array(tbdata.field(atag)).astype('float64')
                 self.acov= nu.array(tbdata.field(acovtag)).astype('float64')
+                if kwargs.has_key('useweights') and kwargs['useweights']:
+                    weight= nu.array(tbdata.field(wtag)).astype('float64')
         elif kwargs.has_key('a'):
             pass
         self.da= self.a.shape[1]
