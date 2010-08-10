@@ -1,6 +1,6 @@
 import re
 import numpy as nu
-from scipy import stats
+from scipy import stats, linalg
 from extreme_deconvolution import extreme_deconvolution
 
 def train(data,ngauss=2,init_xdtarget=None):
@@ -77,8 +77,59 @@ class xdtarget:
         self.amp= amp
         self.mean= mean
         self.covar= covar
+        self.ngauss= len(self.amp)
 
-class trainData:
+    def __call__(self,*args):
+        """
+        NAME:
+        
+           __call__
+
+        PURPOSE:
+
+           evaluate the log-probability of the input under the density model
+
+        INPUT:
+
+           Either:
+
+              1) xddata object
+
+        OUTPUT:
+
+           array of log-probabilities
+
+        HISTORY:
+        
+           2010-08-09 - Written - Bovy (NYU)
+        
+        """
+        if isinstance(args[0],xddata):
+            return self._eval(args[0].a,args[0].acov)
+        else:
+            return self._eval(args[0],args[1])
+
+    def _eval(self,a,acov):
+        ndata= a.shape[0]
+        da= a.shape[1]
+        if len(a) == len(acov):
+            diagcovar= True
+        twopiterm= 0.5*da*nu.log(2.*nu.pi)
+        out= nu.zeros(ndata)
+        loglike= nu.zeros(self.ngauss)
+        for ii in range(ndata):
+            for kk in range(self.ngauss):
+                if diagcovar:
+                    tinv= linalg.inv(self.covar[kk,:,:]+nu.diag(acov[ii,:]))
+                else:
+                    tinv= linalg.inv(self.covar[kk,:,:]+acov[ii,:,:])
+                delta= a[ii,:]-self.mean[kk,:]
+                loglike[kk]= nu.log(self.amp[kk])+0.5*nu.log(linalg.det(tinv))\
+                    -0.5*nu.dot(delta,nu.dot(tinv,delta))
+            out[ii]= _logsum(loglike)
+        return out
+
+class xddata:
     """Class that holds the training data
     
     Initialize with filename (atag, acovtag) or arrays a and acov
@@ -122,3 +173,25 @@ class trainData:
             if kwargs.has_key('weight'):
                 self.weight= kwargs['weight']
         self.da= self.a.shape[1]
+
+
+def _logsum(array):
+    """
+    NAME:
+       _logsum
+    PURPOSE:
+       calculate the logarithm of the sum of an array of numbers,
+       given as a set of logs
+    INPUT:
+       array - logarithms of the numbers to be summed
+    OUTPUT:
+       logarithm of the sum of the exp of the numbers in array
+    REVISION HISTORY:
+       2009-09-29 -Written - Bovy (NYU)
+    """
+    #For now Press' log-sum-exp because I am too lazy to implement 
+    #my own algorithm for this
+    array= nu.array(array)
+    c= nu.amax(array)
+    return nu.log(nu.nansum(nu.exp(nu.add(array,-c))))+c
+
