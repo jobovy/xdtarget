@@ -95,6 +95,8 @@ class xdtarget:
 
               1) xddata object
 
+              2) a, acov
+
         OUTPUT:
 
            array of log-probabilities
@@ -108,6 +110,46 @@ class xdtarget:
             return self._eval(args[0].a,args[0].acov)
         else:
             return self._eval(args[0],args[1])
+
+    def sample(self,nsample=1):
+        """
+        NAME:
+
+           sample
+
+        PURPOSE:
+
+           sample from the density
+
+        INPUT:
+
+           nsample - number of samples
+
+        OUTPUT:
+
+           array [ndata,da] of samples
+
+        HISTORY:
+        
+           2010-08-09 - Written - Bovy (NYU)
+
+        """
+        #First assign the samples to Gaussians
+        cumamp= nu.cumsum(self.amp)
+        comp= nu.zeros(nsample).astype('int')
+        for ii in range(nsample):
+            gauss= stats.uniform.rvs()
+            jj= 0
+            while (gauss > cumamp[jj]):
+                jj+= 1
+            comp[ii]= jj
+        out= []
+        for c in set(list(comp)):
+            thiscomp= comp[comp == c]
+            thisn= len(thiscomp)
+            out.append(_sample_normal(self.mean[c,:],self.covar[c,:,:],
+                                      nsamples=thisn))
+        return nu.array(out)
 
     def _eval(self,a,acov):
         ndata= a.shape[0]
@@ -195,3 +237,42 @@ def _logsum(array):
     c= nu.amax(array)
     return nu.log(nu.nansum(nu.exp(nu.add(array,-c))))+c
 
+
+def _sample_normal(mean,covar,nsamples=1):
+    """sample_normal: Sample a d-dimensional Gaussian distribution with
+    mean and covar.
+
+    Input:
+     
+       mean     - the mean of the Gaussian
+
+       covar    - the covariance of the Gaussian
+
+       nsamples - (optional) the number of samples desired
+
+    Output:
+
+       samples; if nsamples != 1 then a list is returned
+
+    History:
+
+       2009-05-20 - Written - Bovy (NYU)
+
+    """
+    p= covar.shape[0]
+    #First lower Cholesky of covar
+    L= linalg.cholesky(covar,lower=True)
+    if nsamples > 1:
+        out= []
+    for kk in range(nsamples):
+        #Generate a vector in which the elements ~N(0,1)
+        y= nu.zeros(p)
+        for ii in range(p):
+            y[ii]= stats.norm.rvs()
+        #Form the sample as Ly+mean
+        thissample= nu.dot(L,y)+mean
+        if nsamples == 1:
+            return thissample
+        else:
+            out.append(thissample)
+    return out
