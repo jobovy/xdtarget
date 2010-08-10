@@ -117,5 +117,8 @@ class trainData:
                 if kwargs.has_key('useweights') and kwargs['useweights']:
                     weight= nu.array(tbdata.field(wtag)).astype('float64')
         elif kwargs.has_key('a'):
-            pass
+            self.a= kwargs['a']
+            self.acov= kwargs['acov']
+            if kwargs.has_key('weight'):
+                self.weight= kwargs['weight']
         self.da= self.a.shape[1]
