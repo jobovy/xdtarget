@@ -148,7 +148,7 @@ class xdtarget:
         for c in set(list(comp)):
             thiscomp= comp[comp == c]
             thisn= len(thiscomp)
-            out.append(_sample_normal(self.mean[c,:],self.covar[c,:,:],
+            out.extend(_sample_normal(self.mean[c,:],self.covar[c,:,:],
                                       nsamples=thisn))
         self.samples= nu.array(out).reshape((nsample,self.mean.shape[1]))
         return self.samples
