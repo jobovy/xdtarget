@@ -300,7 +300,7 @@ class xddata:
                 else:
                     self.acov= nu.zeros(self.a.shape)
                 if kwargs.has_key('useweights') and kwargs['useweights']:
-                    weight= nu.array(tbdata.field(wtag)).astype('float64')
+                    self.weight= nu.array(tbdata.field(wtag)).astype('float64')
         elif kwargs.has_key('a'):
             self.a= kwargs['a']
             if kwargs.has_key('acov'):
@@ -348,13 +348,13 @@ class xddata:
         if not kwargs.has_key('ylabel'):
             kwargs['ylabel']= str(d2)
         if hoggscatter:
+            if hasattr(self,'weight'):
+                kwargs['weights']= self.weight
             plot.scatterplot(self.a[:,d1],self.a[:,d2],
-                           *args,**kwargs)
+                                 *args,**kwargs)
         else:
             plot.bovy_plot(self.a[:,d1],self.a[:,d2],
                            *args,**kwargs)
-
-
 
 def _logsum(array):
     """
