@@ -32,10 +32,13 @@ def train(data,ngauss=2,init_xdtarget=None):
     #Initialize
     if init_xdtarget is None:
         initamp= nu.array([1./ngauss for ii in range(ngauss)])
-        mask= (nu.isnan(data.a[:,ii]))*(nu.isinf(data.a[:,ii]))
-        mask= nu.array([not m for m in mask])
-        datameans= nu.array([nu.mean(data.a[mask,ii]) for ii in range(data.da)])
-        datastddevs= nu.array([nu.std(data.a[mask,ii]) for ii in range(data.da)])
+        datameans= nu.zeros(data.da)
+        datastddevs= nu.zeros(data.da)
+        for ii in range(data.da):
+            mask= (nu.isnan(data.a[:,ii]))*(nu.isinf(data.a[:,ii]))
+            mask= nu.array([not m for m in mask])
+            datameans[ii]= nu.mean(data.a[mask,ii])
+            datastddevs[ii]= nu.std(data.a[mask,ii])
         initmean= nu.zeros((ngauss,data.da))
         initcovar= nu.zeros((ngauss,data.da,data.da))
         for kk in range(ngauss):
@@ -74,10 +77,21 @@ def xd(data,init_xdtarget):
 class xdtarget:
     """class that holds the XD solution and can be used to calculate target
     probabilities"""
-    def __init__(self,amp=None,mean=None,covar=None):
-        self.amp= amp
-        self.mean= mean
-        self.covar= covar
+    def __init__(self,*args,**kwargs):
+        if len(args) > 0: #load from file
+            tmp_ext= re.split('\.',args[0])[-1]
+            if tmp_ext == 'sav': #pickle
+                import pickle
+                file= open(args[0],'rb')
+                tmp_self= pickle.load(file)
+                file.close()
+                self.amp= tmp_self.amp
+                self.mean= tmp_self.mean
+                self.covar= tmp_self.covar
+        else:
+            self.amp= kwargs['amp']
+            self.mean= kwargs['mean']
+            self.covar= kwargs['covar']
         self.ngauss= len(self.amp)
 
     def __call__(self,*args):
@@ -195,6 +209,36 @@ class xdtarget:
         else:
             plot.bovy_plot(self.samples[:,d1],self.samples[:,d2],
                            *args,**kwargs)
+
+    def save(self,filename):
+        """
+        NAME:
+        
+           save
+
+        PURPOSE:
+
+           save the xdtarget object to a file
+
+        INPUT:
+
+           filename - name of the file to save the object to
+
+        OUTPUT:
+
+           none
+
+        HISTORY:
+        
+           2010-08-10 - Written - Bovy (NYU)
+        
+        """
+        tmp_ext= re.split('\.',filename)[-1]
+        if tmp_ext == 'sav': #pickle
+            import pickle
+            file= open(filename,'wb')
+            pickle.dump(self,file)
+            file.close()
 
     def _eval(self,a,acov):
         ndata= a.shape[0]
