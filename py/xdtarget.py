@@ -295,8 +295,10 @@ class xddata:
                 hdulist= pyfits.open(kwargs['filename'])
                 tbdata= hdulist[1].data
                 self.a= nu.array(tbdata.field(atag)).astype('float64')
-                if acovtag in hdulist[1].columns.names:
+                if acovtag.lower() in [name.lower() for name in hdulist[1].columns.names]:
                     self.acov= nu.array(tbdata.field(acovtag)).astype('float64')
+                    if self.acov.shape[1] != self.a.shape[1]:
+                        self.acov= nu.reshape(self.acov,(self.a.shape[0],self.a.shape[1],self.a.shape[1]))
                 else:
                     self.acov= nu.zeros(self.a.shape)
                 if kwargs.has_key('useweights') and kwargs['useweights']:
