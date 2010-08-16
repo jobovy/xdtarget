@@ -320,6 +320,8 @@ class xddata:
                     tags= tmp_tags
                     for tag in tags:
                         self.__dict__[tag.lower()]= tbdata.field(tag)
+                    self._alltags= True
+                    self._tags= tags
         elif kwargs.has_key('a'):
             self.a= kwargs['a']
             if kwargs.has_key('acov'):
@@ -329,6 +331,22 @@ class xddata:
             if kwargs.has_key('weight'):
                 self.weight= kwargs['weight']
         self.da= self.a.shape[1]
+
+    def __getitem__(self,key):
+        if len(self.acov.shape) == 2:
+            acov= self.a[key,:]
+        else:
+            acov= self.a[key,:,:]
+        if hasattr(self,'weight'):
+            out= xddata(a=self.a[key,:],acov=acov,weight=self.weight[key,:])
+        #Also transfer tags
+        if self._alltags:
+            for tag in self._tags:
+                thisshape= self.__dict__[tag].shape
+                thistag= nu.reshape(self.__dict__[tag],(thisshape[0],nu.prod(thisshape)/thisshape[0]))
+                tmptag= self.__dict__[tag][key,:]
+                out.__dict__[tag]= nu.reshape(tmptag,(len(key),*thisshape[1:-1]))
+        return out
 
     def scatterplot(self,d1,d2,*args,**kwargs):
         """
