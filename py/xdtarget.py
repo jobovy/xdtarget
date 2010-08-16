@@ -347,7 +347,7 @@ class xdtarget:
                 delta= a[ii,:]-self.mean[kk,:]
                 loglike[kk]= nu.log(self.amp[kk])+0.5*nu.log(linalg.det(tinv))\
                              -0.5*nu.dot(delta,nu.dot(tinv,delta))+\
-                             self.ngauss*_SQRTTWOPI
+                             da*_SQRTTWOPI
             out[ii]= _logsum(loglike)
         return out
 
