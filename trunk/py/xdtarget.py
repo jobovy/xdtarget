@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 import numpy as nu
 from scipy import stats, linalg
 from extreme_deconvolution import extreme_deconvolution
@@ -303,6 +304,18 @@ class xddata:
                     self.acov= nu.zeros(self.a.shape)
                 if kwargs.has_key('useweights') and kwargs['useweights']:
                     self.weight= nu.array(tbdata.field(wtag)).astype('float64')
+                if kwargs.has_key('alltags') and kwargs['alltags']:
+                    tags= hdulist[1].columns.names
+                    tmp_tags= deepcopy(tags)
+                    for ii in range(len(tags)):
+                        if tags[ii].lower() == atag.lower() or \
+                           tags[ii].lower() == acovtag.lower:
+                            tmp_tags.pop(ii)
+                        if kwargs.has_key('useweights') and kwargs['useweights'] and tags[ii].lower() == wtag.lower():
+                            tmp_tags.pop(ii)
+                    tags= tmp_tags
+                    for tag in tags:
+                        self.__dict__[tag.lower()]= tbdata.field(tag)
         elif kwargs.has_key('a'):
             self.a= kwargs['a']
             if kwargs.has_key('acov'):
