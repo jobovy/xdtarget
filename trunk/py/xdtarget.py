@@ -321,7 +321,9 @@ class xddata:
                     for tag in tags:
                         self.__dict__[tag.lower()]= tbdata.field(tag)
                     self._alltags= True
-                    self._tags= tags
+                    self._tags= [tag.lower() for tag in tags]
+                else:
+                    self._alltags= False
         elif kwargs.has_key('a'):
             self.a= kwargs['a']
             if kwargs.has_key('acov'):
@@ -333,19 +335,37 @@ class xddata:
         self.da= self.a.shape[1]
 
     def __getitem__(self,key):
-        if len(self.acov.shape) == 2:
-            acov= self.a[key,:]
+        if not isinstance(key,slice):
+            nkey= 1
         else:
-            acov= self.a[key,:,:]
+            nkey= len(self.a[key,0])
+        if len(self.acov.shape) == 2:
+            acov= self.acov[key,:]
+            dacov= (nkey,self.da)
+        else:
+            acov= self.acov[key,:,:]
+            dacov= (nkey,self.da,self.da)
+        print (nkey,self.da)
         if hasattr(self,'weight'):
-            out= xddata(a=self.a[key,:],acov=acov,weight=self.weight[key,:])
+            out= xddata(a=nu.reshape(self.a[key,:],(nkey,self.da)),
+                        acov=nu.reshape(acov,dacov),
+                        weight=nu.reshape(self.weight[key,:],(nkey,self.da)))
+        else:
+            out= xddata(a=nu.reshape(self.a[key,:],(nkey,self.da)),
+                        acov=nu.reshape(acov,dacov))
         #Also transfer tags
         if self._alltags:
             for tag in self._tags:
                 thisshape= self.__dict__[tag].shape
                 thistag= nu.reshape(self.__dict__[tag],(thisshape[0],nu.prod(thisshape)/thisshape[0]))
-                tmptag= self.__dict__[tag][key,:]
-                out.__dict__[tag]= nu.reshape(tmptag,(len(key),*thisshape[1:-1]))
+                tmptag= thistag[key,:]
+                outshape=[nkey]
+                nshape= len(list(thisshape))
+                thisshape= [thisshape[ii] for ii in range(nshape)
+                            if ii != 0]
+                outshape.extend([s for s in thisshape])
+                outshape= tuple(outshape)
+                out.__dict__[tag]= nu.reshape(tmptag,outshape)
         return out
 
     def scatterplot(self,d1,d2,*args,**kwargs):
