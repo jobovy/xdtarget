@@ -244,13 +244,18 @@ class xdtarget:
     def _eval(self,a,acov):
         ndata= a.shape[0]
         da= a.shape[1]
-        if len(a) == len(acov):
+        if len(a.shape) == len(acov.shape):
             diagcovar= True
+        else:
+            diagcovar= False
         twopiterm= 0.5*da*nu.log(2.*nu.pi)
         out= nu.zeros(ndata)
         loglike= nu.zeros(self.ngauss)
         for ii in range(ndata):
             for kk in range(self.ngauss):
+                if self.amp[kk] == 0.:
+                    loglike[kk]= nu.finfo(nu.dtype(nu.float64)).min
+                    continue
                 if diagcovar:
                     tinv= linalg.inv(self.covar[kk,:,:]+nu.diag(acov[ii,:]))
                 else:
