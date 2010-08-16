@@ -446,7 +446,7 @@ def scatterplot(x,y,*args,**kwargs):
         aspect= kwargs['aspect']
         kwargs.pop('aspect')
     else:
-        aspect= None
+        aspect= (xrange[1]-xrange[0])/(yrange[1]-yrange[0])
     data= sc.array([x,y]).T
     hist, edges= sc.histogramdd(data,bins=bins,range=[xrange,yrange],
                                 weights=weights)
