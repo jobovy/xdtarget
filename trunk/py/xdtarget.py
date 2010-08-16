@@ -309,7 +309,7 @@ class xddata:
                     tmp_tags= deepcopy(tags)
                     for ii in range(len(tags)):
                         if tags[ii].lower() == atag.lower() or \
-                           tags[ii].lower() == acovtag.lower:
+                           tags[ii].lower() == acovtag.lower():
                             tmp_tags.pop(ii)
                         if kwargs.has_key('useweights') and kwargs['useweights'] and tags[ii].lower() == wtag.lower():
                             tmp_tags.pop(ii)
