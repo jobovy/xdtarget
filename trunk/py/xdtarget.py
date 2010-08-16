@@ -272,6 +272,8 @@ class xddata:
 
     weight=, useweights=, wtag
 
+    alltags=True
+
     """
     def __init__(self,**kwargs):
         if kwargs.has_key('filename'):
