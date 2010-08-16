@@ -345,7 +345,6 @@ class xddata:
         else:
             acov= self.acov[key,:,:]
             dacov= (nkey,self.da,self.da)
-        print (nkey,self.da)
         if hasattr(self,'weight'):
             out= xddata(a=nu.reshape(self.a[key,:],(nkey,self.da)),
                         acov=nu.reshape(acov,dacov),
