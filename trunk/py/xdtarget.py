@@ -4,7 +4,7 @@ import numpy as nu
 from scipy import stats, linalg
 from extreme_deconvolution import extreme_deconvolution
 import bovy_plot as plot
-
+_SQRTTWOPI= -0.5*nu.log(2.*nu.pi)
 def train(data,ngauss=2,init_xdtarget=None):
     """
     NAME:
@@ -262,7 +262,8 @@ class xdtarget:
                     tinv= linalg.inv(self.covar[kk,:,:]+acov[ii,:,:])
                 delta= a[ii,:]-self.mean[kk,:]
                 loglike[kk]= nu.log(self.amp[kk])+0.5*nu.log(linalg.det(tinv))\
-                    -0.5*nu.dot(delta,nu.dot(tinv,delta))
+                             -0.5*nu.dot(delta,nu.dot(tinv,delta))+\
+                             self.ngauss*_SQRTTWOPI
             out[ii]= _logsum(loglike)
         return out
 
