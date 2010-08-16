@@ -307,10 +307,12 @@ class xddata:
                 if kwargs.has_key('alltags') and kwargs['alltags']:
                     tags= hdulist[1].columns.names
                     tmp_tags= deepcopy(tags)
+                    popped= 0
                     for ii in range(len(tags)):
                         if tags[ii].lower() == atag.lower() or \
                            tags[ii].lower() == acovtag.lower():
-                            tmp_tags.pop(ii)
+                            tmp_tags.pop(ii-popped)
+                            popped+= 1
                         if kwargs.has_key('useweights') and kwargs['useweights'] and tags[ii].lower() == wtag.lower():
                             tmp_tags.pop(ii)
                     tags= tmp_tags
