@@ -1,7 +1,9 @@
 import re
 from copy import deepcopy
+import math as m
 import numpy as nu
 from scipy import stats, linalg
+from matplotlib import pyplot, patches
 from extreme_deconvolution import extreme_deconvolution
 import bovy_plot as plot
 _SQRTTWOPI= -0.5*nu.log(2.*nu.pi)
@@ -210,6 +212,88 @@ class xdtarget:
         else:
             plot.bovy_plot(self.samples[:,d1],self.samples[:,d2],
                            *args,**kwargs)
+
+    def plot(self,d1,d2,*args,**kwargs):
+        """
+        NAME:
+        
+           plot
+
+        PURPOSE:
+
+           make a plot of the solution
+
+        INPUT:
+
+           d1, d2 - x and y dimension to plot
+
+           dens - make density plot
+
+        OUTPUT:
+
+           plot to output device
+
+        HISTORY:
+
+           2010-08-16 - Written - Bovy (NYU)
+
+        """
+        if kwargs.has_key('dens') and kwargs['dens']:
+            dens= True
+            kwargs.pop('dens')
+        else:
+            dens= False
+        if not kwargs.has_key('xlabel'):
+            kwargs['xlabel']= str(d1)
+        if not kwargs.has_key('ylabel'):
+            kwargs['ylabel']= str(d2)
+
+        if not dens:
+            #Create the ellipses for the Gaussians
+            x= nu.zeros(self.ngauss)
+            y= nu.zeros(self.ngauss)
+            ellipses=[]
+            ymin, ymax= 0, 0
+            xmin, xmax= 0,0
+            for ii in range(self.ngauss):
+                x[ii]= self.mean[ii,d1]
+                y[ii]= self.mean[ii,d2]
+                #Calculate the eigenvalues and the rotation angle
+                ycovar= nu.zeros((2,2))
+                ycovar[0,0]= self.covar[ii,d1,d1]
+                ycovar[1,1]= self.covar[ii,d2,d2]
+                ycovar[0,1]= self.covar[ii,d1,d2]
+                ycovar[1,0]= ycovar[0,1]
+                eigs= linalg.eig(ycovar)
+                angle= m.atan(-eigs[1][0,1]/eigs[1][1,1])/m.pi*180.
+                thisellipse= patches.Ellipse(nu.array([x[ii],y[ii]]),
+                                             2*nu.sqrt(eigs[0][0]),
+                                             2*nu.sqrt(eigs[0][1]),angle)
+                ellipses.append(thisellipse)
+                if (x[ii]+m.sqrt(ycovar[0,0])) > xmax:
+                    xmax= (x[ii]+m.sqrt(ycovar[0,0]))
+                if (x[ii]-m.sqrt(ycovar[0,0])) < xmin:
+                    xmin= (x[ii]-m.sqrt(ycovar[0,0]))
+                if (y[ii]+m.sqrt(ycovar[1,1])) > ymax:
+                    ymax= (y[ii]+m.sqrt(ycovar[1,1]))
+                if (y[ii]-m.sqrt(ycovar[1,1])) < ymin:
+                    ymin= (y[ii]-m.sqrt(ycovar[1,1]))
+
+            fig= pyplot.figure()
+            ax= fig.add_subplot(111)
+            for e in ellipses:
+                ax.add_artist(e)
+                e.set_facecolor('none')
+            ax.set_xlabel(kwargs['xlabel'])
+            ax.set_ylabel(kwargs['ylabel'])
+            if not kwargs.has_key('xrange'):
+                ax.set_xlim((xmin,xmax))
+            else:
+                ax.set_xlim((kwargs['xrange'][0],kwargs['xrange'][1]))
+            if not kwargs.has_key('yrange'):
+                ax.set_ylim((ymin,ymax))
+            else:
+                ax.set_ylim((kwargs['yrange'][0],kwargs['yrange'][1]))
 
     def save(self,filename):
         """
