@@ -421,6 +421,8 @@ class xddata:
                 self.acov= nu.zeros(self.a.shape)
             if kwargs.has_key('weight'):
                 self.weight= kwargs['weight']
+            self._alltags= False
+            self._tags= None
         self.da= self.a.shape[1]
 
     def __getitem__(self,key):
