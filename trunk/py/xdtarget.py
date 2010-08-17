@@ -332,7 +332,6 @@ class xdtarget:
             diagcovar= True
         else:
             diagcovar= False
-        twopiterm= 0.5*da*nu.log(2.*nu.pi)
         out= nu.zeros(ndata)
         loglike= nu.zeros(self.ngauss)
         for ii in range(ndata):
