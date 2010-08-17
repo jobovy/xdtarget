@@ -454,6 +454,8 @@ class xddata:
                 outshape.extend([s for s in thisshape])
                 outshape= tuple(outshape)
                 out.__dict__[tag]= nu.reshape(tmptag,outshape)
+        out._alltags= self._alltags
+        out._tags= self._tags
         return out
 
     def scatterplot(self,d1,d2,*args,**kwargs):
