@@ -439,7 +439,7 @@ class xddata:
         if hasattr(self,'weight'):
             out= xddata(a=nu.reshape(self.a[key,:],(nkey,self.da)),
                         acov=nu.reshape(acov,dacov),
-                        weight=self.weight[key,:])
+                        weight=self.weight[key])
         else:
             out= xddata(a=nu.reshape(self.a[key,:],(nkey,self.da)),
                         acov=nu.reshape(acov,dacov))
