@@ -253,8 +253,8 @@ class xdtarget:
             x= nu.zeros(self.ngauss)
             y= nu.zeros(self.ngauss)
             ellipses=[]
-            ymin, ymax= 0, 0
-            xmin, xmax= 0,0
+            ymin, ymax= self.mean[0,d1], self.mean[0,d1]
+            xmin, xmax= self.mean[0,d2], self.mean[0,d2]
             for ii in range(self.ngauss):
                 x[ii]= self.mean[ii,d1]
                 y[ii]= self.mean[ii,d2]
