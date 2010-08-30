@@ -5,7 +5,7 @@ import numpy as nu
 from scipy import stats, linalg
 from matplotlib import pyplot, patches
 from extreme_deconvolution import extreme_deconvolution
-import bovy_plot as plot
+import bovy_plot
 _SQRTTWOPI= -0.5*nu.log(2.*nu.pi)
 def train(data,ngauss=2,init_xdtarget=None):
     """
@@ -207,11 +207,11 @@ class xdtarget:
         if not kwargs.has_key('ylabel'):
             kwargs['ylabel']= str(d2)
         if hoggscatter:
-            plot.scatterplot(self.samples[:,d1],self.samples[:,d2],
-                           *args,**kwargs)
+            bovy_plot.scatterplot(self.samples[:,d1],self.samples[:,d2],
+                                  *args,**kwargs)
         else:
-            plot.bovy_plot(self.samples[:,d1],self.samples[:,d2],
-                           *args,**kwargs)
+            bovy_plot.bovy_plot(self.samples[:,d1],self.samples[:,d2],
+                                *args,**kwargs)
 
     def plot(self,d1,d2,*args,**kwargs):
         """
@@ -228,6 +228,10 @@ class xdtarget:
            d1, d2 - x and y dimension to plot
 
            dens - make density plot
+
+           xrange, yrange
+
+           npix, npix_x, npix_y
 
         OUTPUT:
 
@@ -294,6 +298,81 @@ class xdtarget:
                 ax.set_ylim((ymin,ymax))
             else:
                 ax.set_ylim((kwargs['yrange'][0],kwargs['yrange'][1]))
+
+        else:
+            #Create the ellipses for the Gaussians, to determine range
+            x= nu.zeros(self.ngauss)
+            y= nu.zeros(self.ngauss)
+            ellipses=[]
+            ymin, ymax= self.mean[0,d1], self.mean[0,d1]
+            xmin, xmax= self.mean[0,d2], self.mean[0,d2]
+            for ii in range(self.ngauss):
+                x[ii]= self.mean[ii,d1]
+                y[ii]= self.mean[ii,d2]
+                #Calculate the eigenvalues and the rotation angle
+                ycovar= nu.zeros((2,2))
+                ycovar[0,0]= self.covar[ii,d1,d1]
+                ycovar[1,1]= self.covar[ii,d2,d2]
+                ycovar[0,1]= self.covar[ii,d1,d2]
+                ycovar[1,0]= ycovar[0,1]
+                if (x[ii]+3.*m.sqrt(ycovar[0,0])) > xmax:
+                    xmax= (x[ii]+3.*m.sqrt(ycovar[0,0]))
+                if (x[ii]-3.*m.sqrt(ycovar[0,0])) < xmin:
+                    xmin= (x[ii]-3.*m.sqrt(ycovar[0,0]))
+                if (y[ii]+3.*m.sqrt(ycovar[1,1])) > ymax:
+                    ymax= (y[ii]+3.*m.sqrt(ycovar[1,1]))
+                if (y[ii]-3.*m.sqrt(ycovar[1,1])) < ymin:
+                    ymin= (y[ii]-3.*m.sqrt(ycovar[1,1]))
+
+            #Get range
+            if not kwargs.has_key('xrange'):
+                kwargs['xrange']= [xmin,xmax]
+            if not kwargs.has_key('yrange'):
+                kwargs['yrange']= [ymin,ymax]
+            xrange= kwargs['xrange']
+            yrange= kwargs['yrange']
+            if not kwargs.has_key('npix') and not kwargs.has_key('npix_x'):
+                npix_x= 101
+            elif kwargs.has_key('npix_x'):
+                npix_x= kwargs['npix_x']
+                kwargs.pop('npix_x')
+            elif kwargs.has_key('npix'):
+                npix_x= kwargs['npix']
+            if not kwargs.has_key('npix') and not kwargs.has_key('npix_y'):
+                npix_y= 101
+            elif kwargs.has_key('npix_y'):
+                npix_y= kwargs['npix_y']
+                kwargs.pop('npix_y')
+            elif kwargs.has_key('npix'):
+                npix_y= kwargs['npix']
+                kwargs.pop('npix')
+            if kwargs.has_key('npix'):
+                kwargs.pop('npix')
+
+            #compute density
+            dens= nu.zeros((npix_x,npix_y))
+            xs= nu.linspace(xrange[0],xrange[1],npix_x)
+            ys= nu.linspace(yrange[0],yrange[1],npix_y)
+            means= nu.zeros((len(self.amp),2))
+            covars= nu.zeros((len(self.amp),2,2))
+            for kk in range(len(self.amp)):
+                means[kk,0]= self.mean[kk,d1]
+                means[kk,1]= self.mean[kk,d2]
+                covars[kk,0,0]= self.covar[kk,d1,d1]
+                covars[kk,1,0]= self.covar[kk,d1,d2]
+                covars[kk,0,1]= self.covar[kk,d2,d1]
+                covars[kk,1,1]= self.covar[kk,d2,d2]
+            thisxd= xdtarget(amp=self.amp,
+                             mean= means,
+                             covar=covars)
+            for ii in range(npix_x):
+                for jj in range(npix_y):
+                    dens[ii,jj]= thisxd(nu.array([xs[ii],ys[jj]]).reshape((1,2)),
+                                        nu.zeros((2,2)))
+            dens= nu.exp(dens)
+            bovy_plot.bovy_dens2d(dens.T,origin='lower',cmap='gist_yarg',
+                                  **kwargs)
+
 
     def save(self,filename):
         """
@@ -499,11 +578,11 @@ class xddata:
         if hoggscatter:
             if hasattr(self,'weight'):
                 kwargs['weights']= self.weight
-            plot.scatterplot(self.a[:,d1],self.a[:,d2],
-                                 *args,**kwargs)
+            bovy_plot.scatterplot(self.a[:,d1],self.a[:,d2],
+                                  *args,**kwargs)
         else:
-            plot.bovy_plot(self.a[:,d1],self.a[:,d2],
-                           *args,**kwargs)
+            bovy_plot.bovy_plot(self.a[:,d1],self.a[:,d2],
+                                *args,**kwargs)
 
 def _logsum(array):
     """
