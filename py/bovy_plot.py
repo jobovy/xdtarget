@@ -12,6 +12,34 @@
 #                         bovy_text
 #                         
 #############################################################################
+#############################################################################
+#Copyright (c) 2010, Jo Bovy
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without 
+#modification, are permitted provided that the following conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice, 
+#      this list of conditions and the following disclaimer.
+#   Redistributions in binary form must reproduce the above copyright notice, 
+#      this list of conditions and the following disclaimer in the 
+#      documentation and/or other materials provided with the distribution.
+#   The name of the author may not be used to endorse or promote products 
+#      derived from this software without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+#A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+#HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+#OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+#AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+#WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#POSSIBILITY OF SUCH DAMAGE.
+#############################################################################
 import re
 import math as m
 import scipy as sc
@@ -20,7 +48,9 @@ from scipy import interpolate
 import matplotlib
 import matplotlib.pyplot as pyplot
 import matplotlib.ticker as ticker
+import matplotlib.cm as cm
 from matplotlib import rc
+from matplotlib.ticker import NullFormatter
 _DEFAULTNCNTR= 10
 def bovy_end_print(filename,**kwargs):
     """
@@ -183,7 +213,7 @@ def bovy_dens2d(X,**kwargs):
         ylabel=None
     if kwargs.has_key('extent'):
         extent= kwargs['extent']
-        kwargs.pop['extent']
+        kwargs.pop('extent')
     else:
         if kwargs.has_key('xrange'):
             xlimits=list(kwargs['xrange'])
@@ -402,6 +432,8 @@ def scatterplot(x,y,*args,**kwargs):
        bins - number of bins to use in each dimension
        weights - data-weights
        aspect - aspect ratio
+       onedhists - if True, make one-d histograms on the sides
+       onedhistcolor, onedhistfc, onedhistec
     OUTPUT:
     HISTORY:
        2010-04-15 - Written - Bovy (NYU)
@@ -447,14 +479,59 @@ def scatterplot(x,y,*args,**kwargs):
         kwargs.pop('aspect')
     else:
         aspect= (xrange[1]-xrange[0])/(yrange[1]-yrange[0])
+    if kwargs.has_key('onedhists'):
+        onedhists= kwargs['onedhists']
+        kwargs.pop('onedhists')
+    else:
+        onedhists= False
+    if kwargs.has_key('onedhisttype'):
+        onedhisttype= kwargs['onedhisttype']
+        kwargs.pop('onedhisttype')
+    else:
+        onedhisttype= 'step'
+    if kwargs.has_key('onedhistcolor'):
+        onedhistcolor= kwargs['onedhistcolor']
+        kwargs.pop('onedhistcolor')
+    else:
+        onedhistcolor= 'k'
+    if kwargs.has_key('onedhistfc'):
+        onedhistfc=kwargs['onedhistfc']
+        kwargs.pop('onedhistfc')
+    else:
+        onedhistfc= 'w'
+    if kwargs.has_key('onedhistec'):
+        onedhistec=kwargs['onedhistec']
+        kwargs.pop('onedhistec')
+    else:
+        onedhistec= 'k'
+    if onedhists:
+        fig= pyplot.figure()
+        nullfmt   = NullFormatter()         # no labels
+        # definitions for the axes
+        left, width = 0.1, 0.65
+        bottom, height = 0.1, 0.65
+        bottom_h = left_h = left+width
+        rect_scatter = [left, bottom, width, height]
+        rect_histx = [left, bottom_h, width, 0.2]
+        rect_histy = [left_h, bottom, 0.2, height]
+        axScatter = pyplot.axes(rect_scatter)
+        axHistx = pyplot.axes(rect_histx)
+        axHisty = pyplot.axes(rect_histy)
+        # no labels
+        axHistx.xaxis.set_major_formatter(nullfmt)
+        axHistx.yaxis.set_major_formatter(nullfmt)
+        axHisty.xaxis.set_major_formatter(nullfmt)
+        axHisty.yaxis.set_major_formatter(nullfmt)
+        fig.sca(axScatter)
     data= sc.array([x,y]).T
     hist, edges= sc.histogramdd(data,bins=bins,range=[xrange,yrange],
                                 weights=weights)
     cumimage= bovy_dens2d(hist.T,contours=True,levels=levels,cntrmass=True,
-                          cntrcolors='k',cmap='gist_yarg',origin='lower',
+                          cntrcolors='k',cmap=cm.gist_yarg,origin='lower',
                           xrange=xrange,yrange=yrange,xlabel=xlabel,
                           ylabel=ylabel,interpolation='nearest',
-                          retCumImage=True,aspect=aspect)
+                          retCumImage=True,aspect=aspect,
+                          overplot=onedhists)
     binxs= []
     xedge= edges[0]
     for ii in range(len(xedge)-1):
@@ -480,6 +557,16 @@ def scatterplot(x,y,*args,**kwargs):
                       color='%.2f'%(1.-w8[ii]),*args,**kwargs)
     else:
         bovy_plot(plotx,ploty,overplot=True,*args,**kwargs)
+    #Add onedhists
+    if not onedhists:
+        return
+    axHistx.hist(x, bins=bins,normed=True,histtype=onedhisttype,range=xrange,
+                 color=onedhistcolor,fc=onedhistfc,ec=onedhistec)
+    axHisty.hist(y, bins=bins, orientation='horizontal',normed=True,
+                 histtype=onedhisttype,range=yrange,
+                 color=onedhistcolor,fc=onedhistfc,ec=onedhistec)
+    axHistx.set_xlim( axScatter.get_xlim() )
+    axHisty.set_ylim( axScatter.get_ylim() )
 
 def _add_axislabels(xlabel,ylabel):
     """
