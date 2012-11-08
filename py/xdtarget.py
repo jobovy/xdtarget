@@ -5,7 +5,10 @@ import numpy as nu
 from scipy import stats, linalg
 from matplotlib import pyplot, patches
 from extreme_deconvolution import extreme_deconvolution
-import bovy_plot
+try:
+    from galpy.util import bovy_plot #Latest
+except ImportError:
+    import bovy_plot
 _SQRTTWOPI= -0.5*nu.log(2.*nu.pi)
 def train(data,ngauss=2,init_xdtarget=None):
     """
